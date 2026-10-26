@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Cdefs%3E%3ClinearGradient id=%27g%27 x1=%270%27 y1=%270%27 x2=%271%27 y2=%271%27%3E%3Cstop offset=%270%27 stop-color=%27%234F46E5%27/%3E%3Cstop offset=%271%27 stop-color=%27%230891B2%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2764%27 height=%2764%27 rx=%2716%27 fill=%27url(%23g)%27/%3E%3Cpath d=%27M23 30v-5a9 9 0 0 1 18 0v5%27 fill=%27none%27 stroke=%27%23EEF1FF%27 stroke-width=%275%27 stroke-linecap=%27round%27/%3E%3Crect x=%2717%27 y=%2729%27 width=%2730%27 height=%2722%27 rx=%277%27 fill=%27%23EEF1FF%27/%3E%3C/svg%3E">
+<meta name="theme-color" content="#0B0F1E">
+<title>PrivateSMS: catatan yang hilang setelah dibaca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B0F1E; --text:#EEF1FF; --muted:#A9B0D0; --line:rgba(255,255,255,.18);
+  --ember:#FFB86B; --focus:#A5B4FC;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{
+  min-height:100dvh; display:grid; place-items:center; padding:24px 16px;
+  background:var(--ink); color:var(--text);
+  font-family:'Sora',system-ui,-apple-system,'Segoe UI',sans-serif; line-height:1.55;
+}
+.orb{position:fixed; border-radius:50%; filter:blur(90px); opacity:.6; z-index:0; pointer-events:none}
+.orb.a{width:46vmax; height:46vmax; background:#4F46E5; top:-18vmax; left:-14vmax}
+.orb.b{width:38vmax; height:38vmax; background:#0891B2; bottom:-16vmax; right:-10vmax}
+.orb.c{width:26vmax; height:26vmax; background:#A21CAF; bottom:8vh; left:-8vmax; opacity:.4}
+
+.shell{position:relative; z-index:1; width:100%; max-width:520px}
+.brand{display:flex; align-items:center; gap:10px; margin:0 4px 18px; font-weight:600; letter-spacing:-.01em}
+
+.glass{
+  padding:28px; border-radius:26px; border:1px solid var(--line);
+  background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
+  -webkit-backdrop-filter:blur(28px) saturate(150%); backdrop-filter:blur(28px) saturate(150%);
+  box-shadow:0 28px 70px rgba(2,4,16,.45), inset 0 1px 0 rgba(255,255,255,.28);
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .glass{background:rgba(22,27,54,.92)}
+}
+h1{margin:0 0 8px; font-size:clamp(1.5rem,5.5vw,1.95rem); line-height:1.2; letter-spacing:-.025em; font-weight:700}
+p{margin:0 0 20px; color:var(--muted); font-size:.95rem}
+label{display:block; margin:0 0 8px; font-size:.85rem; color:var(--muted)}
+
+textarea,select,input{
+  width:100%; font:inherit; color:var(--text); border:1px solid var(--line); border-radius:16px;
+  background:rgba(6,9,22,.38);
+}
+textarea{min-height:160px; padding:14px 16px; resize:vertical}
+select,input{padding:13px 14px}
+select option{color:#0B0F1E}
+textarea::placeholder{color:rgba(169,176,208,.6)}
+:is(textarea,select,input,button,a):focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+
+.meta{display:flex; justify-content:space-between; margin:8px 2px 18px; font-size:.8rem; color:var(--muted)}
+.row{display:flex; gap:10px; flex-wrap:wrap}
+.row > *{flex:1 1 160px}
+.row .grow{flex:2 1 220px}
+
+.btn{
+  display:inline-flex; justify-content:center; align-items:center; gap:8px; width:100%;
+  padding:14px 18px; border:1px solid transparent; border-radius:15px; cursor:pointer;
+  font:inherit; font-weight:600; text-decoration:none;
+  background:var(--text); color:var(--ink); transition:transform .15s, background .15s;
+}
+.btn:hover{background:#fff}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.55; cursor:progress}
+.btn.ghost{background:rgba(255,255,255,.09); color:var(--text); border-color:var(--line)}
+.btn.ghost:hover{background:rgba(255,255,255,.16)}
+
+.err{margin:12px 2px 0; color:#FF9E9E; font-size:.88rem; min-height:1.2em}
+.stack{display:grid; gap:10px; margin-top:14px}
+
+.chip{
+  display:inline-flex; align-items:center; gap:8px; margin:0 0 16px; padding:6px 12px;
+  border-radius:999px; font-size:.82rem; color:var(--ember);
+  background:rgba(255,184,107,.12); border:1px solid rgba(255,184,107,.35);
+}
+.chip i{width:7px; height:7px; border-radius:50%; background:var(--ember)}
+
+.note{
+  margin:0 0 16px; padding:16px; max-height:42vh; overflow:auto; border-radius:16px;
+  white-space:pre-wrap; overflow-wrap:anywhere; font-size:1rem; line-height:1.6;
+  background:rgba(6,9,22,.42); border:1px solid var(--line);
+  animation:dissolve-in 1s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes dissolve-in{from{opacity:0; filter:blur(14px); transform:scale(.98)} to{opacity:1; filter:blur(0); transform:none}}
+.foot{margin:16px 4px 0; text-align:center; font-size:.78rem; color:rgba(169,176,208,.75)}
+
+@media (max-width:420px){.glass{padding:22px 18px; border-radius:22px}}
+@media (prefers-reduced-motion:reduce){.note{animation:none} .btn{transition:none}}
+</style>
+</head>
+<body>
+<div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+
+<main class="shell">
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+      <rect x="1" y="1" width="26" height="26" rx="8" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)"/>
+      <path d="M10 13v-2a4 4 0 0 1 8 0v2" fill="none" stroke="#EEF1FF" stroke-width="2" stroke-linecap="round"/>
+      <rect x="8" y="13" width="12" height="8" rx="2.5" fill="#EEF1FF"/>
+    </svg>
+    PrivateSMS
+  </div>
+
+  <!-- Buat catatan -->
+  <section class="glass view" id="v-create" hidden>
+    <h1>Kirim catatan yang hilang setelah dibaca</h1>
+    <p>Tulis pesan, bagikan linknya. Begitu dibuka sekali, catatan terhapus permanen dari server.</p>
+    <label for="text">Isi catatan</label>
+    <textarea id="text" maxlength="4444" placeholder="Password, kode, atau pesan rahasia…"></textarea>
+    <div class="meta"><span>Maksimal 4.444 karakter</span><span id="count">0 / 4444</span></div>
+    <button class="btn" id="create">Buat link rahasia</button>
+    <div class="err" id="err" role="alert"></div>
+  </section>
+
+  <!-- Link siap -->
+  <section class="glass view" id="v-done" hidden>
+    <h1>Link siap dibagikan</h1>
+    <p>Link ini hanya bisa dibuka satu kali. Kalau tidak dibuka, otomatis hangus dalam 24 jam.</p>
+    <label for="link">Link catatan</label>
+    <input id="link" readonly>
+    <div class="stack">
+      <button class="btn" id="copyLink">Salin link</button>
+      <a class="btn ghost" href="/">Buat catatan baru</a>
+    </div>
+  </section>
+
+  <!-- Siap dibuka -->
+  <section class="glass view" id="v-ready" hidden>
+    <h1>Ada catatan rahasia untukmu</h1>
+    <p>Catatan akan dihancurkan begitu kamu menampilkannya. Pastikan kamu siap menyalinnya.</p>
+    <button class="btn" id="reveal">Tampilkan catatan</button>
+    <div class="err" id="err2" role="alert"></div>
+  </section>
+
+  <!-- Catatan terbuka -->
+  <section class="glass view" id="v-open" hidden>
+    <div class="chip" role="status"><i></i>Sudah dihancurkan dari server</div>
+    <div class="note" id="noteText"></div>
+    <div class="stack">
+      <button class="btn" id="copyNote">Salin isi catatan</button>
+      <a class="btn ghost" href="/">Buat catatan baru</a>
+    </div>
+    <p style="margin:14px 2px 0; font-size:.82rem">Salin sekarang. Kalau halaman ini ditutup, catatan tidak bisa dibuka lagi.</p>
+  </section>
+
+  <!-- Sudah hancur -->
+  <section class="glass view" id="v-gone" hidden>
+    <h1>Catatan ini sudah tidak ada</h1>
+    <p>Catatan sudah dibuka sebelumnya atau sudah hangus setelah 24 jam. Minta pengirim membuat link baru.</p>
+    <a class="btn" href="/">Buat catatan baru</a>
+  </section>
+
+  <div class="foot">Catatan disimpan sementara di server dan dihapus saat dibuka pertama kali.</div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const show = id => document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== id);
+
+async function api(url, body) {
+  const opt = body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined;
+  try {
+    const r = await fetch(url, opt);
+    return { ok: r.ok, data: await r.json().catch(() => ({})) };
+  } catch (e) {
+    return { ok: false, data: { error: 'Tidak bisa terhubung ke server.' } };
+  }
+}
+
+async function copy(text, btn, done) {
+  const old = btn.textContent;
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    const t = document.createElement('textarea');
+    t.value = text; document.body.appendChild(t); t.select();
+    document.execCommand('copy'); t.remove();
+  }
+  btn.textContent = done;
+  setTimeout(() => btn.textContent = old, 1800);
+}
+
+// Halaman buat
+$('#text').addEventListener('input', e => $('#count').textContent = e.target.value.length + ' / 4444');
+$('#create').addEventListener('click', async () => {
+  const text = $('#text').value.trim();
+  $('#err').textContent = '';
+  if (!text) { $('#err').textContent = 'Tulis isi catatan dulu.'; return; }
+  const btn = $('#create'); btn.disabled = true;
+  const { ok, data } = await api('/api/note', { text });
+  btn.disabled = false;
+  if (!ok) { $('#err').textContent = data.error || 'Gagal membuat catatan. Coba lagi.'; return; }
+  $('#link').value = location.origin + '/n/' + data.id;
+  $('#text').value = '';
+  show('v-done');
+});
+$('#copyLink').addEventListener('click', e => copy($('#link').value, e.target, 'Link disalin'));
+
+// Halaman baca
+$('#reveal').addEventListener('click', async () => {
+  const id = location.pathname.split('/').pop();
+  const btn = $('#reveal'); btn.disabled = true;
+  const { ok, data } = await api('/api/note/' + id + '/read', {});
+  if (!ok) { btn.disabled = false; return show('v-gone'); }
+  $('#noteText').textContent = data.text;
+  show('v-open');
+});
+$('#copyNote').addEventListener('click', e => copy($('#noteText').textContent, e.target, 'Isi catatan disalin'));
+
+// Routing sederhana
+(() => {
+  const ok = /^\/n\/[a-f0-9]{32}$/.test(location.pathname);
+  show(ok ? 'v-ready' : 'v-create');
+})();
+</script>
+</body>
+</html>
